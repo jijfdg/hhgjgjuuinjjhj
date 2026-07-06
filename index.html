@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Application Form</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f0f0f;
+}
+
+.container{
+  display:flex;
+  min-height:100vh;
+}
+
+/* LEFT */
+.left{
+  flex:1;
+  background:#fff;
+  padding:40px;
+  box-sizing:border-box;
+}
+
+h2{
+  margin-bottom:10px;
+}
+
+input, select{
+  width:100%;
+  padding:11px;
+  margin-top:5px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  font-size:14px;
+}
+
+label{
+  font-size:12px;
+  color:#666;
+  margin-top:10px;
+  display:block;
+}
+
+button{
+  width:100%;
+  padding:14px;
+  margin-top:20px;
+  background:black;
+  color:white;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+#loading{
+  display:none;
+  margin-top:10px;
+  color:#aaa;
+}
+
+/* MODAL */
+#modal{
+  display:none;
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.7);
+  justify-content:center;
+  align-items:center;
+}
+
+.modal-box{
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+  width:320px;
+  text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="left">
+
+<h2>Application Form</h2>
+
+<form id="applicationForm">
+
+<label>Email</label>
+<input name="email" required>
+
+<label>First Name</label>
+<input name="firstName" required>
+
+<label>Last Name</label>
+<input name="lastName" required>
+
+<label>Country</label>
+<select name="country">
+  <option>Ukraine</option>
+  <option>USA</option>
+  <option>Canada</option>
+  <option>UK</option>
+</select>
+
+<button type="submit">Submit Application</button>
+
+<div id="loading">Processing...</div>
+
+</form>
+
+</div>
+
+</div>
+
+<!-- MODAL -->
+<div id="modal">
+  <div class="modal-box">
+    <h3>Confirm Application</h3>
+    <p id="summary"></p>
+
+    <button id="yes">YES</button>
+    <button id="no">NO</button>
+  </div>
+</div>
+
+<script>
+window.onload = function () {
+
+  const form = document.getElementById("applicationForm");
+  const modal = document.getElementById("modal");
+  const summary = document.getElementById("summary");
+  const yes = document.getElementById("yes");
+  const no = document.getElementById("no");
+  const loading = document.getElementById("loading");
+
+  let formDataGlobal = {};
+
+  // STEP 1: open modal
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    formDataGlobal = Object.fromEntries(new FormData(form));
+
+    summary.innerHTML =
+      "Email: " + formDataGlobal.email + "<br>" +
+      "Name: " + formDataGlobal.firstName + " " + formDataGlobal.lastName + "<br>" +
+      "Country: " + formDataGlobal.country;
+
+    modal.style.display = "flex";
+  });
+
+  // CANCEL
+  no.onclick = () => {
+    modal.style.display = "none";
+  };
+
+  // CONFIRM + SEND
+  yes.onclick = async () => {
+
+    modal.style.display = "none";
+
+    loading.style.display = "block";
+
+    try {
+
+      // fake loading (30 sec)
+      await new Promise(r => setTimeout(r, 30000));
+
+      await fetch("/.netlify/functions/sendToTelegram", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(formDataGlobal)
+      });
+
+      loading.innerHTML = "✔ Sent successfully";
+
+      setTimeout(() => {
+        loading.style.display = "none";
+        form.reset();
+      }, 2000);
+
+    } catch (err) {
+      loading.innerHTML = "Error sending";
+    }
+  };
+
+};
+</script>
+
+</body>
+</html>
